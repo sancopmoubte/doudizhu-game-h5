@@ -53,8 +53,10 @@ canvas {
 <script type="text/javascript" src="ddz.min.js"></script>
 
 <script type="text/javascript">
-// 覆盖游戏内部可能的路径引用
-window.assetsPath = ""; 
+// 确保 ddz 对象存在
+if (typeof ddz === 'undefined') {
+    var ddz = {};
+}
 
 function startGame()
 {
@@ -71,13 +73,26 @@ function startGame()
 	if(canvas.height < bh) canvas.style.marginTop = (bh - canvas.height >> 1) + "px";
 	
 	playAudio();
-	ddz.startup();
+    
+    // 检查 ddz.startup 是否存在
+    if (typeof ddz !== 'undefined' && typeof ddz.startup === 'function') {
+        ddz.startup();
+    } else {
+        console.error("ddz.startup is not defined. Resources might still be loading.");
+        setTimeout(startGame, 500); // 重试
+    }
 }
 
 
 function playAudio()
 {
-	audioObj = createAudio("myAudioObj");
+	var audioObj = document.getElementById("myAudioObj");
+    if (!audioObj) {
+        audioObj = new Audio("bg.mp3");
+        audioObj.loop = true;
+        audioObj.id = "myAudioObj";
+        document.body.appendChild(audioObj);
+    }
 	var playPromise = audioObj.play();
 	if (playPromise !== undefined) {
 		playPromise.catch(error => {
@@ -87,15 +102,6 @@ function playAudio()
 			}, {once: true});
 		});
 	}
-}
-
-function createAudio(id)
-{
-	var audio = new Audio("bg.mp3");
-	audio.loop = true;
-	audio.id = id;
-	document.body.appendChild(audio);
-	return audio;
 }
 </script>
 
